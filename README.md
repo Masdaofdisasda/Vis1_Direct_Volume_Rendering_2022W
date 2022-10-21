@@ -33,7 +33,7 @@ Recommended IDE: Webstorm (free educational version available using TU Wien e-ma
 *Important*: do not run index.html from the file system! Only execute it from inside WebStorm 
 (by selecting a browser icon from the top right panel that appears when you open index.html) 
 or from hosting the project within another web server. Opening index.html directly in the browser without a server
-will result in an error when trying to load the the .essl shader files. 
+will result in an error when trying to load the .essl shader files. 
 
 
 ## Shaders

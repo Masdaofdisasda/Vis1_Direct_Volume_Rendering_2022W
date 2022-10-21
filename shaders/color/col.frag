@@ -9,8 +9,8 @@
 *
 * Redistribution and use in source and binary forms, with or without
 * modification, are not permitted.
-* 
-* Sets one of two colors for a fragment, depending on colorIdx. 
+*
+* Sets one of two colors for a fragment, depending on colorIdx.
 */
 uniform vec3 color[2];
 uniform int colorIdx;

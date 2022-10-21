@@ -25,8 +25,7 @@ class Shader {
     }
 
     async #loadShader(shader, name){
-        const program = await d3.text("shaders/"+name+".essl");
-        this.material[shader] = program;
+        this.material[shader] = await d3.text("shaders/" + name);
     }
 
     // this function has to be explicitly called after the constructor from another async function like that:
