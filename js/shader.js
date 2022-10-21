@@ -26,6 +26,7 @@ class Shader {
 
     async #loadShader(shader, name){
         this.material[shader] = await d3.text("shaders/" + name);
+        if (!this.material[shader]) console.error("file " + name + "not found");
     }
 
     // this function has to be explicitly called after the constructor from another async function like that:
