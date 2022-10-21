@@ -19,6 +19,13 @@ body {
 
 #tfContainer{
     flex: 1;
+    display: flex;
+}
+
+#tfContainer div{
+    background-color: lightgray;
+    width: 3px;
+    margin-right: 1px;
 }
 
 .dot{
