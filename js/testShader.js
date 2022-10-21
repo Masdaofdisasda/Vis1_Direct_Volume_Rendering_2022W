@@ -15,7 +15,7 @@
  */
 class TestShader extends Shader{
     constructor(color){
-        super("color_vert", "color_frag");
+        super("color/col.vert", "color/col.frag");
         // sends color as RGB or BGR in a Vector3 array
         this.setUniform("color",
             [
