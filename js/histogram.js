@@ -1,7 +1,7 @@
 class Histogram {
     constructor() {
         this.rawBins = [];
-        this.prettyBins = [];
+        this.scaledBins = [];
         this.chart = null;
     }
 
@@ -17,35 +17,44 @@ class Histogram {
     }
 
     setBins(volume) {
-        let rawBins = [];
-        let biggestRawBin = this.max(volume.voxels);
+        this.rawBins = this.divideIntoBins(volume.voxels, 100);
+        this.scaledBins = this.scaleBins(this.rawBins, 1, 200);
+    }
 
-        volume.voxels.forEach(element => {
-            let binIndex = Math.trunc((element/biggestRawBin) * 100);
-            let currentCount = rawBins[binIndex];
+    divideIntoBins(data, binAmount) {
+        let bins = [];
+        let biggestDataPoint = this.max(data);
+
+        data.forEach(dataPoint => {
+            let binIndex = Math.trunc((dataPoint / biggestDataPoint) * (binAmount - 1));
+            let currentCount = bins[binIndex];
 
             if (typeof currentCount === 'undefined') {
-                rawBins[binIndex] = 1;
+                bins[binIndex] = 1;
             }
             else {
-                rawBins[binIndex]++;
+                bins[binIndex]++;
             }
         });
-        this.rawBins = rawBins;
+        return bins;
+    }
 
-        let biggestBinSize = this.max(rawBins);
-        if (biggestBinSize === 0) {
+    scaleBins(bins, minSize, maxSize) {
+        // check for division through 0
+        let biggestBinSize = this.max(bins);
+        let allBinsAreEmpty = biggestBinSize === 0;
+        if (allBinsAreEmpty)
             return;
-        }
 
-        let normalizedBins = [];
-        for (let i = 0; i < rawBins.length; i++) {
-            normalizedBins[i] = Math.log2(rawBins[i] / biggestBinSize) * 200;
-            if (normalizedBins[i] > 0 && normalizedBins[i] < 1) {
-                normalizedBins[i] = 1;
+        // scale bins
+        let scaledBins = [];
+        for (let i = 0; i < bins.length; i++) {
+            scaledBins[i] = (bins[i] / biggestBinSize) * maxSize;
+            if (scaledBins[i] < minSize) {
+                scaledBins[i] = minSize;
             }
         }
-        this.prettyBins = normalizedBins;
+        return scaledBins;
     }
 
     max(arr) {
@@ -58,15 +67,28 @@ class Histogram {
     }
 
     setupChart() {
+        // let svg = d3.select('#tfContainer')
+        //     .append('svg')
+        //     .attr('width', 300)
+        //     .attr('height', 150);
+
+        // svg.append("g")
+        //     .attr("class", "axis")
+        //     .call(d3.axisLeft(y))
+        //     .append("text")
+        //     .style("text-anchor", "middle")
+        //     // .attr("y", margin.top / 2)
+        //     .text("domain name");
+
         this.chart = d3.select("#tfContainer")
             .selectAll("div")
-            .data(this.prettyBins)
+            .data(this.scaledBins)
             .enter().append("div")
             .style("height", function (value) { return value + "px"; });
     }
 
     updateChart() {
-        this.chart.data(this.prettyBins).transition(2000)
+        this.chart.data(this.scaledBins).transition(2000)
             .style("height", function (value) { return value + "px"; });
     }
 }
