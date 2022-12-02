@@ -71,15 +71,14 @@ async function resetVis(){
     raycastShader = new RaycastShader(volume);
     //const testCube = new THREE.BoxGeometry(1.0, 1.0, 1.0);
     //testCube.translate(1.0,1.0,1.0);
-    const testCube = new THREE.BoxGeometry(2.0, 2.0, 2.0);
-    testCube.translate(2.0,2.0,2.0);
+    const testCube = new THREE.BoxGeometry(volume.width, volume.height, volume.depth);
     const testMaterial = raycastShader.material;
     await raycastShader.load(); // this function needs to be called explicitly, and only works within an async function!
     const testMesh = new THREE.Mesh(testCube, testMaterial);
     scene.add(testMesh);
 
     // our camera orbits around an object centered at (0,0,0)
-    orbitCamera = new OrbitCamera(camera, new THREE.Vector3(0,0,0), 2, renderer.domElement);
+    orbitCamera = new OrbitCamera(camera, new THREE.Vector3(0,0,0), 2*volume.max, renderer.domElement);
 
 
 
