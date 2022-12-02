@@ -20,7 +20,8 @@ class Shader {
         this.material = new THREE.ShaderMaterial
         ({
             uniforms: {},
-            transparent: true
+            transparent: true,
+            side: THREE.BackSide,
         });
     }
 

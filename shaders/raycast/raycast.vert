@@ -1,25 +1,14 @@
-varying vec4 v_nearpos;
-varying vec4 v_farpos;
-varying vec3 v_position;
+varying vec3 vray_dir;
+flat out vec3 transformed_eye;
+
+uniform vec3 volume_scale;
 
 void main() {
-    // Prepare transforms to map to "camera view". See also:
-    // https://threejs.org/docs/#api/renderers/webgl/WebGLProgram
-    mat4 viewtransformf = modelViewMatrix;
-    mat4 viewtransformi = inverse(modelViewMatrix);
-    // Project local vertex coordinate to camera position. Then do a step
-    // backward (in cam coords) to the near clipping plane, and project back. Do
-    // the same for the far clipping plane. This gives us all the information we
-    // need to calculate the ray and truncate it to the viewing cone.
-    vec4 position4 = vec4(position, 1.0);
-    vec4 pos_in_cam = viewtransformf * position4;
-    // Intersection of ray and near clipping plane (z = -1 in clip coords)
-    pos_in_cam.z = -pos_in_cam.w;
-    v_nearpos = viewtransformi * pos_in_cam;
-    // Intersection of ray and far clipping plane (z = +1 in clip coords)
-    pos_in_cam.z = pos_in_cam.w;
-    v_farpos = viewtransformi * pos_in_cam;
-    // Set varyings and output pos
-    v_position = position;
-    gl_Position = projectionMatrix * viewMatrix * modelMatrix * position4;
+    // Translate the cube to center it at the origin.
+    vec3 volume_translation = vec3(0.5) - volume_scale * 0.5;
+    gl_Position = projectionMatrix * modelViewMatrix * vec4(position * volume_scale + volume_translation, 1);
+
+    // Compute eye position and ray directions in the unit cube space
+    transformed_eye = (cameraPosition - volume_translation) / volume_scale;
+    vray_dir = position - transformed_eye;
 }
