@@ -21,7 +21,7 @@ let container = null;
 let volume = null;
 let fileInput = null;
 let raycastShader = null;
-
+let histogram = null;
 
 /**
  * Load all data and initialize UI here.
@@ -31,6 +31,9 @@ function init() {
     container = document.getElementById("viewContainer");
     canvasWidth = window.innerWidth * 0.7;
     canvasHeight = window.innerHeight * 0.7;
+
+    // Init Histogram
+    histogram = new Histogram();
 
     // WebGL renderer
     renderer = new THREE.WebGLRenderer();
@@ -76,6 +79,8 @@ async function resetVis(){
     await raycastShader.load(); // this function needs to be called explicitly, and only works within an async function!
     const testMesh = new THREE.Mesh(testCube, testMaterial);
     scene.add(testMesh);
+
+    histogram.update(volume);
 
     // our camera orbits around an object centered at (0,0,0)
     orbitCamera = new OrbitCamera(camera, new THREE.Vector3(0,0,0), 2*volume.max, renderer.domElement);
