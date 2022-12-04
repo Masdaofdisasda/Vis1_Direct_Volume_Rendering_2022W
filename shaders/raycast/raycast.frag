@@ -4,11 +4,11 @@ precision highp int;
 precision highp float;
 precision highp sampler3D;
 
-uniform vec3 u_size;
-uniform int u_renderstyle;
+uniform vec3 volume_size;
+uniform int render_mode;
 uniform float u_renderthreshold;
 uniform vec2 u_clim;
-uniform sampler3D u_data;
+uniform sampler3D volume_data;
 varying vec3 vray_dir;
 flat in vec3 transformed_eye;
 
@@ -23,7 +23,7 @@ vec4 apply_color(float val);
 vec4 add_lighting(float val, vec3 loc, vec3 step, vec3 view_ray);
 
 void main() {
-    if (u_renderstyle == 0){
+    if (render_mode == 0){
         raycast_fhc(); // first hit compositing
     } else {
         raycast_mip(); // maximum intensity projection
@@ -43,7 +43,7 @@ void raycast_fhc() {
     t_hit.x = max(t_hit.x, 0.0);
 
     // Compute the step size to march through the volume grid
-    vec3 dt_vec = 1.0 / (u_size * abs(ray_dir));
+    vec3 dt_vec = 1.0 / (volume_size * abs(ray_dir));
     float dt = min(dt_vec.x, min(dt_vec.y, dt_vec.z));
 
     // ray cast loop
@@ -52,7 +52,7 @@ void raycast_fhc() {
     for (float t = t_hit.x; t < t_hit.y; t += dt) {
 
         // sample the volume
-        float val = texture(u_data, p).r;
+        float val = texture(volume_data, p).r;
         if (val > u_renderthreshold){
             p = p - ray_dir * dt * 0.5;
             dt = dt / float(REFINEMENT_STEPS);
@@ -83,7 +83,7 @@ void raycast_mip() {
     t_hit.x = max(t_hit.x, 0.0);
 
     // Compute the step size to march through the volume grid
-    vec3 dt_vec = 1.0 / (u_size * abs(ray_dir));
+    vec3 dt_vec = 1.0 / (volume_size * abs(ray_dir));
     float dt = min(dt_vec.x, min(dt_vec.y, dt_vec.z));
 
     // ray cast loop
@@ -128,7 +128,7 @@ vec2 intersect_box(vec3 orig, vec3 dir) {
 
 float sample_volume(vec3 texcoords) {
     /* Sample float value from a 3D texture. Assumes intensity data. */
-    return texture(u_data, texcoords).r;
+    return texture(volume_data, texcoords).r;
 }
 
 vec4 apply_color(float val) {

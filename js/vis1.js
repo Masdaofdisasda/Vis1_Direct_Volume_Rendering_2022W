@@ -72,8 +72,6 @@ async function resetVis(){
     camera = new THREE.PerspectiveCamera( 75, canvasWidth / canvasHeight, 0.1, 1000 );
 
     raycastShader = new RaycastShader(volume);
-    //const testCube = new THREE.BoxGeometry(1.0, 1.0, 1.0);
-    //testCube.translate(1.0,1.0,1.0);
     const testCube = new THREE.BoxGeometry(volume.width, volume.height, volume.depth);
     const testMaterial = raycastShader.material;
     await raycastShader.load(); // this function needs to be called explicitly, and only works within an async function!

@@ -1,7 +1,7 @@
 varying vec3 vray_dir;
 flat out vec3 transformed_eye;
 
-uniform vec3 u_size;
+uniform vec3 volume_size;
 
 
 void main() {
@@ -9,6 +9,6 @@ void main() {
     gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1);
 
     // Compute eye position and ray directions in the unit cube space (0-1)
-    transformed_eye = (cameraPosition /u_size) + vec3(0.5);
-    vray_dir = (position /u_size) + vec3(0.5) - transformed_eye;
+    transformed_eye = (cameraPosition /volume_size) + vec3(0.5);
+    vray_dir = (position /volume_size) + vec3(0.5) - transformed_eye;
 }

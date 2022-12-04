@@ -31,13 +31,11 @@ class RaycastShader extends Shader{
 
         const longestAxis = Math.max(volume.width, Math.max(volume.height,volume.depth));
 
-        console.log(volume);
-        this.setUniform("u_size", new THREE.Vector3(volume.width, volume.height, volume.depth));
-        this.setUniform("u_renderstyle", 0);
-        this.setUniform("u_renderthreshold", 0.2);
-        this.setUniform("u_clim", new THREE.Vector2(0,1));
-        this.setUniform("u_data", data3D);
-        console.log(new THREE.Vector3(volume.width/longestAxis, volume.height/longestAxis, volume.depth/longestAxis));
+        this.setUniform("volume_size", new THREE.Vector3(volume.width, volume.height, volume.depth));
+        this.setUniform("render_mode", 0);
+        this.setUniform("u_renderthreshold", 0.2); //TODO add controls
+        this.setUniform("u_clim", new THREE.Vector2(0,1)); //TODO add controls
+        this.setUniform("volume_data", data3D);
         this.setUniform("volume_scale", new THREE.Vector3(volume.width/longestAxis, volume.height/longestAxis, volume.depth/longestAxis));
     }
 }
