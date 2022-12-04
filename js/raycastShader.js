@@ -33,9 +33,9 @@ class RaycastShader extends Shader{
 
         console.log(volume);
         this.setUniform("u_size", new THREE.Vector3(volume.width, volume.height, volume.depth));
-        this.setUniform("u_renderstyle", 1);
+        this.setUniform("u_renderstyle", 0);
         this.setUniform("u_renderthreshold", 0.2);
-        this.setUniform("u_clim", new THREE.Vector2(1,0));
+        this.setUniform("u_clim", new THREE.Vector2(0,1));
         this.setUniform("u_data", data3D);
         console.log(new THREE.Vector3(volume.width/longestAxis, volume.height/longestAxis, volume.depth/longestAxis));
         this.setUniform("volume_scale", new THREE.Vector3(volume.width/longestAxis, volume.height/longestAxis, volume.depth/longestAxis));

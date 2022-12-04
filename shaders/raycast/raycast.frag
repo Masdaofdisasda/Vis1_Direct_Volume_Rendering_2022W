@@ -13,12 +13,14 @@ varying vec3 vray_dir;
 flat in vec3 transformed_eye;
 
 const int REFINEMENT_STEPS = 4;
+const float shininess = 40.0;
 
 vec2 intersect_box(vec3 orig, vec3 dir);
 void raycast_fhc();
 void raycast_mip();
 float sample_volume(vec3 texcoords);
 vec4 apply_color(float val);
+vec4 add_lighting(float val, vec3 loc, vec3 step, vec3 view_ray);
 
 void main() {
     if (u_renderstyle == 0){
@@ -46,29 +48,26 @@ void raycast_fhc() {
 
     // ray cast loop
     vec3 p = transformed_eye + t_hit.x * ray_dir;
-    vec4 color = vec4(0.0f);
     float maxVal = 0.0f;
     for (float t = t_hit.x; t < t_hit.y; t += dt) {
 
         // sample the volume
         float val = texture(u_data, p).r;
-        maxVal = max(maxVal, val);
-        vec4 val_color = vec4(vec3(val), val);
-
-        // Step 4.2: Accumulate the color and opacity using the front-to-back
-        // compositing equation
-        color.rgb += (1.0 - color.a) * val_color.a * val_color.rgb;
-        color.a += (1.0 - color.a) * val_color.a;
-
-        // break out of the loop when the color is near opaque
-        if (color.a >= 0.95) {
-            break;
+        if (val > u_renderthreshold){
+            p = p - ray_dir * dt * 0.5;
+            dt = dt / float(REFINEMENT_STEPS);
+            for (int i=0; i<REFINEMENT_STEPS; i++) {
+                if (val > u_renderthreshold){
+                    gl_FragColor = add_lighting(val, p, ray_dir * dt * 0.3, ray_dir);
+                    return;
+                }
+                p += ray_dir * dt;
+            }
         }
 
         // step further
         p += ray_dir * dt;
     }
-    gl_FragColor = color;
 }
 
 void raycast_mip() {
@@ -133,6 +132,61 @@ float sample_volume(vec3 texcoords) {
 }
 
 vec4 apply_color(float val) {
-    val = (val - u_clim[1]) / (u_clim[0] - u_clim[1]);
+    val = (val - u_clim[0]) / (u_clim[1] - u_clim[0]);
     return vec4(vec3(val), 1.0);
+}
+
+vec4 add_lighting(float val, vec3 loc, vec3 step, vec3 view_ray)
+{
+    // Calculate color by incorporating lighting
+    // View direction
+    vec3 V = normalize(view_ray);
+    // calculate normal vector from gradient
+    vec3 N;
+    float val1, val2;
+    val1 = sample_volume(loc + vec3(-step[0], 0.0, 0.0));
+    val2 = sample_volume(loc + vec3(+step[0], 0.0, 0.0));
+    N[0] = val1 - val2;
+    val = max(max(val1, val2), val);
+    val1 = sample_volume(loc + vec3(0.0, -step[1], 0.0));
+    val2 = sample_volume(loc + vec3(0.0, +step[1], 0.0));
+    N[1] = val1 - val2;
+    val = max(max(val1, val2), val);
+    val1 = sample_volume(loc + vec3(0.0, 0.0, -step[2]));
+    val2 = sample_volume(loc + vec3(0.0, 0.0, +step[2]));
+    N[2] = val1 - val2;
+    val = max(max(val1, val2), val);
+    float gm = length(N); // gradient magnitude
+    N = normalize(N);
+    // Flip normal so it points towards viewer
+    float Nselect = float(dot(N, V) > 0.0);
+    N = (2.0 * Nselect - 1.0) * N;	// ==	Nselect * N - (1.0-Nselect)*N;
+    // Init colors
+    vec4 ambient_color = vec4(0.0, 0.0, 0.0, 0.0);
+    vec4 diffuse_color = vec4(0.0, 0.0, 0.0, 0.0);
+    vec4 specular_color = vec4(0.0, 0.0, 0.0, 0.0);
+    // note: could allow multiple lights
+    for (int i=0; i<1; i++)
+    {
+        // Get light direction (make sure to prevent zero devision)
+        vec3 L = normalize(view_ray);	//lightDirs[i];
+        float lightEnabled = float( length(L) > 0.0 );
+        L = normalize(L + (1.0 - lightEnabled));
+        // Calculate lighting properties
+        float lambertTerm = clamp(dot(N, L), 0.0, 1.0);
+        vec3 H = normalize(L+V); // Halfway vector
+        float specularTerm = pow(max(dot(H, N), 0.0), shininess);
+        // Calculate mask
+        float mask1 = lightEnabled;
+        // Calculate colors
+        ambient_color +=	mask1 * ambient_color;	// * gl_LightSource[i].ambient;
+        diffuse_color +=	mask1 * lambertTerm;
+        specular_color += mask1 * specularTerm * specular_color;
+    }
+    // Calculate final color by componing different components
+    vec4 final_color;
+    vec4 color = apply_color(val);
+    final_color = color * (ambient_color + diffuse_color) + specular_color;
+    final_color.a = color.a;
+    return final_color;
 }
