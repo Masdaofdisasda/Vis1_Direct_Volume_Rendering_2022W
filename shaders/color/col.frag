@@ -12,9 +12,7 @@
 *
 * Sets one of two colors for a fragment, depending on colorIdx.
 */
-uniform vec3 color[2];
-uniform int colorIdx;
 
 void main(){
-    gl_FragColor = vec4(color[colorIdx], 1.0);
+    gl_FragColor = vec4(1.0,0.0,0.0, 1.0);
 }

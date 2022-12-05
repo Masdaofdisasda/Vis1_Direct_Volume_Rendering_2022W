@@ -7,7 +7,7 @@
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are not permitted.
- * 
+ *
  * Camera that orbits around a centered object. Only uses mouse input!
  *
  * @author Manuela Waldner
@@ -19,7 +19,7 @@ class OrbitCamera {
         this.targetPos = targetPos;
         this.camera.lookAt(this.targetPos);
         this.radius = radius;
-        this.minRadius = radius / 2;
+        this.minRadius = radius / 8;
         this.maxRadius = radius * 2;
         this.phi = 0;
         this.theta = 0;
