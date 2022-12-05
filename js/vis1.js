@@ -80,7 +80,7 @@ async function resetVis(){
     const testMesh = new THREE.Mesh(testCube, testMaterial);
     scene.add(testMesh);
 
-    histogram.update(volume);
+    histogram.update(volume.voxels);
 
     // our camera orbits around an object centered at (0,0,0)
     orbitCamera = new OrbitCamera(camera, new THREE.Vector3(0,0,0), 2*volume.max, renderer.domElement);

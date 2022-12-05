@@ -1,12 +1,12 @@
 class Histogram {
     constructor() {
-        this.rawBins = [];
-        this.scaledBins = [];
+        this.bins = [];
         this.chart = null;
+        this.binAmount = 100;
     }
 
-    update(volume) {
-        this.setBins(volume);
+    update(densityArray) {
+        this.bins = d3.bin().thresholds(this.binAmount)(densityArray);
 
         if (this.chart === null) {
             this.setupChart();
@@ -16,79 +16,51 @@ class Histogram {
         this.updateChart();
     }
 
-    setBins(volume) {
-        this.rawBins = this.divideIntoBins(volume.voxels, 100);
-        this.scaledBins = this.scaleBins(this.rawBins, 1, 200);
-    }
-
-    divideIntoBins(data, binAmount) {
-        let bins = [];
-        let biggestDataPoint = this.max(data);
-
-        data.forEach(dataPoint => {
-            let binIndex = Math.trunc((dataPoint / biggestDataPoint) * (binAmount - 1));
-            let currentCount = bins[binIndex];
-
-            if (typeof currentCount === 'undefined') {
-                bins[binIndex] = 1;
-            }
-            else {
-                bins[binIndex]++;
-            }
-        });
-        return bins;
-    }
-
-    scaleBins(bins, minSize, maxSize) {
-        // check for division through 0
-        let biggestBinSize = this.max(bins);
-        let allBinsAreEmpty = biggestBinSize === 0;
-        if (allBinsAreEmpty)
-            return;
-
-        // scale bins
-        let scaledBins = [];
-        for (let i = 0; i < bins.length; i++) {
-            scaledBins[i] = (bins[i] / biggestBinSize) * maxSize;
-            if (scaledBins[i] < minSize) {
-                scaledBins[i] = minSize;
-            }
-        }
-        return scaledBins;
-    }
-
-    max(arr) {
-        let biggestNumber = 0;
-        arr.forEach(num => {
-            if (num > biggestNumber)
-                biggestNumber = num;
-        })
-        return biggestNumber;
-    }
-
     setupChart() {
-        // let svg = d3.select('#tfContainer')
-        //     .append('svg')
-        //     .attr('width', 300)
-        //     .attr('height', 150);
+        let svg = d3.select('#tfContainer')
+            .append('svg')
+            .attr('width', "100%")
+            .attr('height', 150);
 
-        // svg.append("g")
-        //     .attr("class", "axis")
-        //     .call(d3.axisLeft(y))
-        //     .append("text")
-        //     .style("text-anchor", "middle")
-        //     // .attr("y", margin.top / 2)
-        //     .text("domain name");
+        let yScale = d3.scaleLinear().domain([0, 100]).range([0, 150]);
+        let yAxis = d3.axisLeft(yScale).ticks(10);
 
+        svg.append("g")
+            .attr("class", "axis")
+            .call(yAxis)
+            .append("text")
+            .style("text-anchor", "middle")
+            .text("domain name");
+
+        let binScale = this.getBinScale();
         this.chart = d3.select("#tfContainer")
+            .append('div')
+            .classed('histogram', true)
             .selectAll("div")
-            .data(this.scaledBins)
-            .enter().append("div")
-            .style("height", function (value) { return value + "px"; });
+            .data(this.bins)
+            .join("div")
+            .style("height", function (value) { return binScale(value.length) + "px"; });
     }
 
     updateChart() {
-        this.chart.data(this.scaledBins).transition(2000)
-            .style("height", function (value) { return value + "px"; });
+        let binScale = this.getBinScale();
+        this.chart.data(this.bins)
+            .transition(5000)
+            .style("height", function (value) { return binScale(value.length) + "px"; });
+    }
+
+    getBinScale() {
+        let binMaxValue = this.sizeOfBiggestBin(this.bins);
+        return d3.scaleLinear().domain([0, binMaxValue]).range([0, 200]);
+    }
+
+    // exists, because "max" function does not work for some reason
+    sizeOfBiggestBin(arr) {
+        let biggestNumber = 0;
+        arr.forEach(num => {
+            if (num.length > biggestNumber)
+                biggestNumber = num.length;
+        })
+        return biggestNumber;
     }
 }

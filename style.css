@@ -17,12 +17,12 @@ body {
     flex: 2;
 }
 
-#tfContainer{
+#tfContainer .histogram{
     flex: 1;
     display: flex;
 }
 
-#tfContainer div{
+#tfContainer .histogram div{
     background-color: lightgray;
     width: 3px;
     margin-right: 1px;
