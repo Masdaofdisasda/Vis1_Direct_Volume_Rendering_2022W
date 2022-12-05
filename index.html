@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <title>Vis1</title>
@@ -24,30 +25,33 @@
 </head>
 
 <!-- call init function when page has loaded -->
+
 <body onload="init()">
 
-<h1>Vis1 Exercise</h1>
-<h2>David Köppl, Nicolas Eder</h2>
+    <h1>Vis1 Exercise</h1>
+    <h2>David Köppl, Nicolas Eder</h2>
 
-<!-- data selector -->
-<p>Select your data here: <input id="upload" type="file"></p>
+    <!-- data selector -->
+    <p>Select your data here: <input id="upload" type="file"></p>
 
-<div class="container">
+    <div class="container">
 
-    <!-- volume rendering container -->
-    <div id="viewContainer"></div>
+        <!-- volume rendering container -->
+        <div id="viewContainer"></div>
 
-    <!-- container for interactive transfer function -->
-    <div id="tfContainer">
-        <svg width="100%" height="500">
-            <g id="left" transform="translate(30, 40)"></g>
-            <g id="bottom" transform="translate(40, 450)"></g>
-          </svg>
+        <!-- container for interactive transfer function -->
+        <div id="tfContainer">
+            <!-- <svg width="100%" height="500">
+                <g id="left" transform="translate(30, 40)"></g>
+                <g id="bottom" transform="translate(40, 450)"></g>
+            </svg> -->
+            <div class="histogram"></div>
+        </div>
+
     </div>
-
-</div>
 
 
 
 </body>
+
 </html>
