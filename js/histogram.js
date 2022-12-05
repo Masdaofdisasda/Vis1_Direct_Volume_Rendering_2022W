@@ -3,6 +3,7 @@ class Histogram {
         this.bins = [];
         this.chart = null;
         this.binAmount = 100;
+        this.barWidth = 3;
     }
 
     update(densityArray) {
@@ -30,19 +31,22 @@ class Histogram {
         //     .style("text-anchor", "middle")
         //     .text("domain name");
 
-        let binScalerFunction = this.getBinScalerFunction();
-        this.chart = d3.select(".histogram")
-            .selectAll("div")
+        let getBarHeight = this.getBinScalerFunction();
+        this.chart = d3.select(".histogram .bins")
+            .selectAll("rect")
             .data(this.bins)
-            .join("div")
-            .style("height", function (value) { return binScalerFunction(value.length) + "px"; });
+            .join("rect")
+            .attr("height", function (value) { return getBarHeight(value.length) + "px"; })
+            .attr("transform", function (d, i) {
+                return "translate(" + i*4 + ", 0)";
+            });
     }
 
     updateChart() {
         let binScale = this.getBinScalerFunction();
         this.chart.data(this.bins)
             .transition(5000)
-            .style("height", function (value) { return binScale(value.length) + "px"; });
+            .attr("height", function (value) { return binScale(value.length) + "px"; })
     }
 
     getBinScalerFunction() {

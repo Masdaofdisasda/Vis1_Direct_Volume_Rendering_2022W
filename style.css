@@ -17,15 +17,9 @@ body {
     flex: 2;
 }
 
-#tfContainer .histogram{
-    flex: 1;
-    display: flex;
-}
-
-#tfContainer .histogram div{
-    background-color: lightgray;
+.histogram rect{
+    fill: lightgray;
     width: 3px;
-    margin-right: 1px;
 }
 
 .dot{
