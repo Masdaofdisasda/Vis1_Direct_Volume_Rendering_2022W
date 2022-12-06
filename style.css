@@ -18,8 +18,7 @@ body {
 }
 
 .histogram rect{
-    fill: lightgray;
-    width: 3px;
+    fill: rgb(112, 112, 112);
 }
 
 .dot{

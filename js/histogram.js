@@ -1,13 +1,22 @@
 class Histogram {
-    constructor() {
+    constructor(onChangeSelectionMethod) {
         this.bins = [];
         this.chart = null;
         this.binAmount = 100;
         this.barWidth = 3;
+        this.onChangeSelectionMethod = onChangeSelectionMethod;
+
+        this.axisOffset = 5;
+        this.axisWidth = 30;
+        this.maxBarHeight = 200;
     }
 
     update(densityArray) {
-        this.bins = d3.bin().thresholds(this.binAmount)(densityArray);
+        let histogram = d3.histogram()
+            .value(function (d) { return d; })
+            .domain([0, 1])
+            .thresholds(this.binAmount);
+        this.bins = histogram(densityArray);
 
         if (this.chart === null)
             this.setupChart();
@@ -16,42 +25,92 @@ class Histogram {
     }
 
     setupChart() {
-        // let svg = d3.select('#tfContainer')
-        //     .append('svg')
-        //     .attr('width', "100%")
-        //     .attr('height', 150);
+        let axisLength = this.getAxisLength();
 
-        // let yScale = d3.scaleLinear().domain([0, 100]).range([0, 150]);
-        // let yAxis = d3.axisLeft(yScale).ticks(10);
+        // add y axis
+        let yAxisScale = d3.scaleLinear().domain([0, 1]).range([axisLength, 0]);
+        let yAxis = d3.axisLeft(yAxisScale).ticks(10);
+        d3.select(".histogram .y-axis")
+            .call(yAxis)
+            .attr("transform", "translate("
+                + this.axisWidth
+                + ","
+                + this.axisOffset
+                + ")");
 
-        // svg.append("g")
-        //     .attr("class", "axis")
-        //     .call(yAxis)
-        //     .append("text")
-        //     .style("text-anchor", "middle")
-        //     .text("domain name");
+        // add x axis
+        let xAxisScale = d3.scaleLinear().domain([0, 1]).range([0, axisLength]);
+        let xAxis = d3.axisBottom(xAxisScale).ticks(10);
+        d3.select(".histogram .x-axis")
+            .call(xAxis)
+            .attr("transform", "translate("
+                + (this.axisWidth)
+                + ","
+                + (axisLength + this.axisOffset)
+                + ")");
 
+        // add bars
         let getBarHeight = this.getBinScalerFunction();
         this.chart = d3.select(".histogram .bins")
+            .attr("transform", "translate("
+                + (this.axisOffset + this.axisWidth)
+                + ","
+                + (axisLength + this.axisOffset)
+                + ")")
             .selectAll("rect")
             .data(this.bins)
             .join("rect")
-            .attr("height", function (value) { return getBarHeight(value.length) + "px"; })
+            .attr("height", function (value) {
+                if (value.length === 0)
+                    return 0;
+                return getBarHeight(value.length) + "px";
+            })
+            .attr("width", this.barWidth + "px")
             .attr("transform", function (d, i) {
-                return "translate(" + i*4 + ", 0)";
+                return "translate(" + i * 4 + ", 0)";
             });
+
+        // add clickable area
+        d3.select(".interaction-area")
+            .attr("transform", "translate("
+                + (this.axisOffset + this.axisWidth)
+                + ","
+                + 0
+                + ")")
+            .append("rect")
+            .style("fill", "transparent")
+            .attr("height", axisLength)
+            .attr("width", axisLength)
+            .on('click', this.onClick);
+
+        // adjust viewBox to fit everything
     }
 
     updateChart() {
-        let binScale = this.getBinScalerFunction();
+        let getBarHeight = this.getBinScalerFunction();
         this.chart.data(this.bins)
             .transition(5000)
-            .attr("height", function (value) { return binScale(value.length) + "px"; })
+            .attr("height", function (value) {
+                if (value.length === 0)
+                    return 0;
+                return getBarHeight(value.length) + "px";
+            })
+    }
+
+    onClick(clickEvent) {
+        let svgPosition = this.getBoundingClientRect();
+        let x = Math.abs(svgPosition.x - clickEvent.x) / svgPosition.width;
+        let y = 1 - Math.abs(svgPosition.y - clickEvent.y) / svgPosition.height;
+        histogram.onChangeSelectionMethod(x);
     }
 
     getBinScalerFunction() {
         let binMaxValue = this.sizeOfBiggestBin(this.bins);
-        return d3.scaleLinear().domain([0, binMaxValue]).range([0, 200]);
+        return d3.scaleLog().domain([1, binMaxValue]).range([0, histogram.maxBarHeight]);
+    }
+
+    getAxisLength() {
+        return this.bins.length * 4;
     }
 
     /**

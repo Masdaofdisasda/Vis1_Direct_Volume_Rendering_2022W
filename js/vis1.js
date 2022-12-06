@@ -33,12 +33,12 @@ function init() {
     canvasHeight = window.innerHeight * 0.7;
 
     // Init Histogram
-    histogram = new Histogram();
+    histogram = new Histogram(updateShaderParameters);
 
     // WebGL renderer
     renderer = new THREE.WebGLRenderer();
-    renderer.setSize( canvasWidth, canvasHeight );
-    container.appendChild( renderer.domElement );
+    renderer.setSize(canvasWidth, canvasHeight);
+    container.appendChild(renderer.domElement);
 
     // read and parse volume file
     fileInput = document.getElementById("upload");
@@ -48,7 +48,7 @@ function init() {
 /**
  * Handles the file reader. No need to change anything here.
  */
-function readFile(){
+function readFile() {
     let reader = new FileReader();
     reader.onloadend = function () {
         console.log("data loaded: ");
@@ -66,10 +66,10 @@ function readFile(){
  *
  * Currently, renders the bounding box of the volume.
  */
-async function resetVis(){
+async function resetVis() {
     // create new empty scene and perspective camera
     scene = new THREE.Scene();
-    camera = new THREE.PerspectiveCamera( 75, canvasWidth / canvasHeight, 0.1, 1000 );
+    camera = new THREE.PerspectiveCamera(75, canvasWidth / canvasHeight, 0.1, 1000);
 
     raycastShader = new RaycastShader(volume);
     const testCube = new THREE.BoxGeometry(volume.width, volume.height, volume.depth);
@@ -78,10 +78,10 @@ async function resetVis(){
     const testMesh = new THREE.Mesh(testCube, testMaterial);
     scene.add(testMesh);
 
-    histogram.update(volume.voxels);
+    histogram.update(volume.voxels, raycastShader);
 
     // our camera orbits around an object centered at (0,0,0)
-    orbitCamera = new OrbitCamera(camera, new THREE.Vector3(0,0,0), 2*volume.max, renderer.domElement);
+    orbitCamera = new OrbitCamera(camera, new THREE.Vector3(0, 0, 0), 2 * volume.max, renderer.domElement);
 
 
 
@@ -92,8 +92,13 @@ async function resetVis(){
 /**
  * Render the scene and update all necessary shader information.
  */
-function paint(){
+function paint() {
     if (volume) {
         renderer.render(scene, camera);
     }
+}
+
+function updateShaderParameters(newDensity) {
+    raycastShader.updateDensity(newDensity);
+    paint();
 }

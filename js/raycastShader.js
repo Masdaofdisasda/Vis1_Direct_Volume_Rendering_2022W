@@ -38,4 +38,8 @@ class RaycastShader extends Shader{
         this.setUniform("volume_data", data3D);
         this.setUniform("volume_scale", new THREE.Vector3(volume.width/longestAxis, volume.height/longestAxis, volume.depth/longestAxis));
     }
+
+    updateDensity(newDensity){
+        this.setUniform("u_renderthreshold", newDensity);
+    }
 }
