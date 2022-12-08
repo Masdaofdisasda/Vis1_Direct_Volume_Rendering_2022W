@@ -16,7 +16,7 @@
  */
 
 class RaycastShader extends Shader{
-    constructor(volume){
+    constructor(volume, selectedDensity){
         super("raycast/raycast.vert", "raycast/raycast.frag");
 
         const data3D = new THREE.Data3DTexture(volume.voxels, volume.width, volume.height, volume.depth);
@@ -33,7 +33,7 @@ class RaycastShader extends Shader{
 
         this.setUniform("volume_size", new THREE.Vector3(volume.width, volume.height, volume.depth));
         this.setUniform("render_mode", 0);
-        this.setUniform("u_renderthreshold", 0.2); //TODO add controls
+        this.setUniform("u_renderthreshold", selectedDensity);
         this.setUniform("u_clim", new THREE.Vector2(0,1)); //TODO add controls
         this.setUniform("volume_data", data3D);
         this.setUniform("volume_scale", new THREE.Vector3(volume.width/longestAxis, volume.height/longestAxis, volume.depth/longestAxis));

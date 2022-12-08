@@ -22,6 +22,7 @@ let volume = null;
 let fileInput = null;
 let raycastShader = null;
 let histogram = null;
+let startDensity = .2;
 
 /**
  * Load all data and initialize UI here.
@@ -33,7 +34,7 @@ function init() {
     canvasHeight = window.innerHeight * 0.7;
 
     // Init Histogram
-    histogram = new Histogram(updateShaderParameters);
+    histogram = new Histogram(updateShaderParameters, startDensity);
 
     // WebGL renderer
     renderer = new THREE.WebGLRenderer();
@@ -71,7 +72,7 @@ async function resetVis() {
     scene = new THREE.Scene();
     camera = new THREE.PerspectiveCamera(75, canvasWidth / canvasHeight, 0.1, 1000);
 
-    raycastShader = new RaycastShader(volume);
+    raycastShader = new RaycastShader(volume, startDensity);
     const testCube = new THREE.BoxGeometry(volume.width, volume.height, volume.depth);
     const testMaterial = raycastShader.material;
     await raycastShader.load(); // this function needs to be called explicitly, and only works within an async function!

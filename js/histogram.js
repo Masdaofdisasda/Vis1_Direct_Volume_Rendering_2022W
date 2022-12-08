@@ -2,12 +2,15 @@ class Histogram {
     constructor(onChangeSelectionMethod, startDensity) {
         this.bins = [];
         this.chart = null;
+        this.onChangeSelectionMethod = onChangeSelectionMethod;
+        this.binScalerFunction;
+        this.axisLength;
+        this.startDensity = startDensity;
+
+        // Settings
         this.binAmount = 100;
         this.barWidth = 3;
-        this.onChangeSelectionMethod = onChangeSelectionMethod;
-        this.selectedCoordinates = { x: startDensity, y: 1 };
-
-        this.axisOffset = 5;
+        this.axisOffset = 20;
         this.axisWidth = 30;
         this.maxBarHeight = 200;
     }
@@ -20,16 +23,18 @@ class Histogram {
         this.bins = histogram(densityArray);
 
         if (this.chart === null)
-            this.setupChart();
+            this.setup();
         else
             this.updateChart();
     }
 
-    setupChart() {
-        let axisLength = this.getAxisLength();
+    setup() {
+        this.axisLength = this.bins.length * 4;
+        let binMaxValue = this.sizeOfBiggestBin(this.bins);
+        this.binScalerFunction = d3.scaleLog().domain([1, binMaxValue]).range([0, histogram.maxBarHeight]);
 
         // add y axis
-        let yAxisScale = d3.scaleLinear().domain([0, 1]).range([axisLength, 0]);
+        let yAxisScale = d3.scaleLinear().domain([0, 1]).range([this.axisLength, 0]);
         let yAxis = d3.axisLeft(yAxisScale).ticks(10);
         d3.select(".histogram .y-axis")
             .call(yAxis)
@@ -40,23 +45,22 @@ class Histogram {
                 + ")");
 
         // add x axis
-        let xAxisScale = d3.scaleLinear().domain([0, 1]).range([0, axisLength]);
+        let xAxisScale = d3.scaleLinear().domain([0, 1]).range([0, this.axisLength]);
         let xAxis = d3.axisBottom(xAxisScale).ticks(10);
         d3.select(".histogram .x-axis")
             .call(xAxis)
             .attr("transform", "translate("
                 + (this.axisWidth)
                 + ","
-                + (axisLength + this.axisOffset)
+                + (this.axisLength + this.axisOffset)
                 + ")");
 
         // add bars
-        let getBarHeight = this.getBinScalerFunction();
         this.chart = d3.select(".histogram .bins")
             .attr("transform", "translate("
-                + (this.axisOffset + this.axisWidth)
+                + (this.axisWidth)
                 + ","
-                + (axisLength + this.axisOffset)
+                + (this.axisLength + this.axisOffset)
                 + ")")
             .selectAll("rect")
             .data(this.bins)
@@ -64,7 +68,7 @@ class Histogram {
             .attr("height", function (value) {
                 if (value.length === 0)
                     return 0;
-                return getBarHeight(value.length) + "px";
+                return histogram.binScalerFunction(value.length) + "px";
             })
             .attr("width", this.barWidth + "px")
             .attr("transform", function (d, i) {
@@ -72,68 +76,59 @@ class Histogram {
             });
 
         // add clickable area
-        d3.select(".interaction-area")
+        let interactionArea = d3.select(".interaction-area")
             .attr("transform", "translate("
-                + (this.axisOffset + this.axisWidth)
+                + (this.axisWidth)
                 + ","
-                + 0
+                + this.axisOffset
                 + ")")
             .append("rect")
             .style("fill", "transparent")
-            .attr("height", axisLength)
-            .attr("width", axisLength)
-            .on('click', this.onClick);
+            .attr("height", this.axisLength)
+            .attr("width", this.axisLength)
+            .on('click', this.onClickChart);
+
+        let n = d3.select(".interaction-area").node()
+        let startPosX = n.getBoundingClientRect().width * this.startDensity;
+        histogram.updateSelectionMarker(startPosX, 1);
     }
 
     updateChart() {
-        let getBarHeight = this.getBinScalerFunction();
         this.chart.data(this.bins)
             .transition(5000)
             .attr("height", function (value) {
                 if (value.length === 0)
                     return 0;
-                return getBarHeight(value.length) + "px";
+                return histogram.binScalerFunction(value.length) + "px";
             })
     }
 
-    onClick(clickEvent) {
+    onClickChart(clickEvent) {
         let svgPosition = this.getBoundingClientRect();
         let x = Math.abs(svgPosition.x - clickEvent.x) / svgPosition.width;
         let y = 1 - Math.abs(svgPosition.y - clickEvent.y) / svgPosition.height;
 
         histogram.onChangeSelectionMethod(x);
-        histogram.updateSelectionMarker(svgPosition, clickEvent);
+
+        let xShrinkFactor = histogram.axisLength/svgPosition.width;
+        let yShrinkFactor = histogram.axisLength/svgPosition.height;
+        let markerX = Math.abs(svgPosition.x - clickEvent.x) * xShrinkFactor;
+        let markerY = Math.abs(svgPosition.y - clickEvent.y) * yShrinkFactor;
+        histogram.updateSelectionMarker(markerX, markerY);
     }
 
-    updateSelectionMarker(svgPosition, clickEvent) {
-
-        let realX = Math.abs(svgPosition.x - clickEvent.x);
-        let realY = Math.abs(svgPosition.y - clickEvent.y);
-
+    updateSelectionMarker(x, y) {
         d3.select(".selection-marker circle")
-            .attr("transform", "translate("
-                + realX
-                + ","
-                + realY
-                + ")")
+            .attr("cx", x)
+            .attr("cy", y)
             .style("fill", "white");
-        
-        
+
         d3.select(".selection-marker line")
-            .attr("x1", realX)
-            .attr("y1", realY)
-            .attr("x2", realX)
-            .attr("y2", histogram.axisOffset + histogram.getAxisLength())
+            .attr("x1", x)
+            .attr("y1", y)
+            .attr("x2", x)
+            .attr("y2", histogram.axisLength)
             .style("stroke", "white");
-    }
-
-    getBinScalerFunction() {
-        let binMaxValue = this.sizeOfBiggestBin(this.bins);
-        return d3.scaleLog().domain([1, binMaxValue]).range([0, histogram.maxBarHeight]);
-    }
-
-    getAxisLength() {
-        return this.bins.length * 4;
     }
 
     /**
