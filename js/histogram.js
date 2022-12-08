@@ -1,10 +1,11 @@
 class Histogram {
-    constructor(onChangeSelectionMethod) {
+    constructor(onChangeSelectionMethod, startDensity) {
         this.bins = [];
         this.chart = null;
         this.binAmount = 100;
         this.barWidth = 3;
         this.onChangeSelectionMethod = onChangeSelectionMethod;
+        this.selectedCoordinates = { x: startDensity, y: 1 };
 
         this.axisOffset = 5;
         this.axisWidth = 30;
@@ -82,8 +83,6 @@ class Histogram {
             .attr("height", axisLength)
             .attr("width", axisLength)
             .on('click', this.onClick);
-
-        // adjust viewBox to fit everything
     }
 
     updateChart() {
@@ -101,7 +100,31 @@ class Histogram {
         let svgPosition = this.getBoundingClientRect();
         let x = Math.abs(svgPosition.x - clickEvent.x) / svgPosition.width;
         let y = 1 - Math.abs(svgPosition.y - clickEvent.y) / svgPosition.height;
+
         histogram.onChangeSelectionMethod(x);
+        histogram.updateSelectionMarker(svgPosition, clickEvent);
+    }
+
+    updateSelectionMarker(svgPosition, clickEvent) {
+
+        let realX = Math.abs(svgPosition.x - clickEvent.x);
+        let realY = Math.abs(svgPosition.y - clickEvent.y);
+
+        d3.select(".selection-marker circle")
+            .attr("transform", "translate("
+                + realX
+                + ","
+                + realY
+                + ")")
+            .style("fill", "white");
+        
+        
+        d3.select(".selection-marker line")
+            .attr("x1", realX)
+            .attr("y1", realY)
+            .attr("x2", realX)
+            .attr("y2", histogram.axisOffset + histogram.getAxisLength())
+            .style("stroke", "white");
     }
 
     getBinScalerFunction() {
