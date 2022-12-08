@@ -9,7 +9,8 @@ class Histogram {
 
         // Settings
         this.binAmount = 100;
-        this.barWidth = 3;
+        this.barWidth = 2; //how much bigger than the spaces
+        this.spacesBetweenBars = .5;
         this.axisOffset = 20;
         this.axisWidth = 30;
         this.maxBarHeight = 200;
@@ -29,31 +30,52 @@ class Histogram {
     }
 
     setup() {
-        this.axisLength = this.bins.length * 4;
+        // calculate dynamic settings
+        this.axisLength = this.binAmount * (this.barWidth + this.spacesBetweenBars);
         let binMaxValue = this.sizeOfBiggestBin(this.bins);
         this.binScalerFunction = d3.scaleLog().domain([1, binMaxValue]).range([0, histogram.maxBarHeight]);
 
+        // set viewbox
+        d3.select(".histogram")
+            .attr("viewBox", "0 0 "
+                + this.getChartWidth()
+                + " "
+                + this.getChartHeight());
+
         // add y axis
         let yAxisScale = d3.scaleLinear().domain([0, 1]).range([this.axisLength, 0]);
-        let yAxis = d3.axisLeft(yAxisScale).ticks(10);
-        d3.select(".histogram .y-axis")
-            .call(yAxis)
+        let yAxisGenerator = d3.axisLeft(yAxisScale).ticks(10);
+        let yAxis = d3.select(".histogram .y-axis")
+            .call(yAxisGenerator)
             .attr("transform", "translate("
                 + this.axisWidth
                 + ","
                 + this.axisOffset
                 + ")");
 
+        yAxis.append("text")
+            .attr("text-anchor", "end")
+            .attr("x", this.axisWidth / 2)
+            .attr("y", -this.axisOffset / 2)
+            .text("Intensity")
+            .attr("fill", "white");
+
         // add x axis
         let xAxisScale = d3.scaleLinear().domain([0, 1]).range([0, this.axisLength]);
-        let xAxis = d3.axisBottom(xAxisScale).ticks(10);
-        d3.select(".histogram .x-axis")
-            .call(xAxis)
+        let xAxisGenerator = d3.axisBottom(xAxisScale).ticks(10);
+        let xAxis = d3.select(".histogram .x-axis")
+            .call(xAxisGenerator)
             .attr("transform", "translate("
                 + (this.axisWidth)
                 + ","
                 + (this.axisLength + this.axisOffset)
                 + ")");
+        xAxis.append("text")
+            .attr("text-anchor", "end")
+            .attr("x", this.axisLength)
+            .attr("y", this.axisWidth)
+            .text("Density")
+            .attr("fill", "white");
 
         // add bars
         this.chart = d3.select(".histogram .bins")
@@ -72,7 +94,9 @@ class Histogram {
             })
             .attr("width", this.barWidth + "px")
             .attr("transform", function (d, i) {
-                return "translate(" + i * 4 + ", 0)";
+                return "translate("
+                    + i * (histogram.barWidth + histogram.spacesBetweenBars)
+                    + ", 0)";
             });
 
         // add clickable area
@@ -88,6 +112,7 @@ class Histogram {
             .attr("width", this.axisLength)
             .on('click', this.onClickChart);
 
+        // Update selection marker
         let n = d3.select(".interaction-area").node()
         let startPosX = n.getBoundingClientRect().width * this.startDensity;
         histogram.updateSelectionMarker(startPosX, 1);
@@ -110,8 +135,8 @@ class Histogram {
 
         histogram.onChangeSelectionMethod(x);
 
-        let xShrinkFactor = histogram.axisLength/svgPosition.width;
-        let yShrinkFactor = histogram.axisLength/svgPosition.height;
+        let xShrinkFactor = histogram.axisLength / svgPosition.width;
+        let yShrinkFactor = histogram.axisLength / svgPosition.height;
         let markerX = Math.abs(svgPosition.x - clickEvent.x) * xShrinkFactor;
         let markerY = Math.abs(svgPosition.y - clickEvent.y) * yShrinkFactor;
         histogram.updateSelectionMarker(markerX, markerY);
@@ -129,6 +154,19 @@ class Histogram {
             .attr("x2", x)
             .attr("y2", histogram.axisLength)
             .style("stroke", "white");
+    }
+
+    getChartHeight() {
+        let h = histogram;
+        return h.axisOffset
+            + h.axisLength
+            + h.axisWidth
+            + h.maxBarHeight;
+    }
+
+    getChartWidth() {
+        let h = histogram;
+        return h.axisWidth + h.axisLength + h.axisOffset;
     }
 
     /**
