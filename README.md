@@ -3,7 +3,9 @@
 Load one of the provided volume files through the GUI. 
 Rotate the orbit camera around the bounding box using the left mouse button. Zoom using the scroll wheel. 
 
-**TODO: complete this section!** (how to use the editor etc.)
+Once a file is loaded, click somewhere inside the coordinate system above the histogram graph to select a density for First-Hit Compositing. Changing the "intensity" has currently no effect.
+
+Click on the switch to change the render mode. Note: Selecting a density value will only have an effect with First-Hit selected.
 
 ## Framework Description
 
@@ -19,7 +21,9 @@ The following files are provided:
     * **shader.js**: Base shader class. Does not need to be modified. Derive your custom shader materials from this class!
     * **testShader.js**: Example shader class demonstrating how to create and use a shader material 
     using external .essl files. Should not be used in the final submission.
-    * **camera.js**: Simple orbit camera that moves nicely around our volumes. Does not need to be modified. 
+    * **camera.js**: Simple orbit camera that moves nicely around our volumes. Does not need to be modified.
+    * **histogram.js**: Class, that generates the histogram and the coordinate system above it. Also handles interactions with it. (Has animated transitions too)
+    * **raycastShader.js** Our implementation of MIP, First Hit and Single pass Raycasting.
     
 Created 2021 by Manuela Waldner, Diana Schalko, amd Laura Luidolt based on the Vis1 Task 1 Qt framework 
 initially created by Johanna Schmidt, Tobias Klein, and Laura Luidolt. 
