@@ -32,11 +32,19 @@ class RaycastShader extends Shader{
         const longestAxis = Math.max(volume.width, Math.max(volume.height,volume.depth));
 
         this.setUniform("volume_size", new THREE.Vector3(volume.width, volume.height, volume.depth));
-        this.setUniform("render_mode", 0);
+        this.setUniform("render_mode", 1);
         this.setUniform("u_renderthreshold", selectedDensity);
         this.setUniform("u_clim", new THREE.Vector2(0,1)); //TODO add controls
         this.setUniform("volume_data", data3D);
         this.setUniform("volume_scale", new THREE.Vector3(volume.width/longestAxis, volume.height/longestAxis, volume.depth/longestAxis));
+    }
+
+    /**
+     * @param mode 0 for First Hit; 1 for MIP
+     */
+    setRenderMode(mode){
+        this.setUniform("render_mode", mode);
+        paint();
     }
 
     updateDensity(newDensity){

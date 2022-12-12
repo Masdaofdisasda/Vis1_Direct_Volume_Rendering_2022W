@@ -84,7 +84,8 @@ async function resetVis() {
     // our camera orbits around an object centered at (0,0,0)
     orbitCamera = new OrbitCamera(camera, new THREE.Vector3(0, 0, 0), 2 * volume.max, renderer.domElement);
 
-
+    // unhide render mode switch (only hidden because implementing functionality before shader exists is too much work)
+    d3.select("#rendermode-switch").style("visibility", "visible");
 
     // init paint loop
     requestAnimationFrame(paint);

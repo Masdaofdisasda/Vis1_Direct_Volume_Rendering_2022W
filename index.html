@@ -33,6 +33,14 @@
 
     <!-- data selector -->
     <p>Select your data here: <input id="upload" type="file"></p>
+    <p id="rendermode-switch" style="visibility: hidden;">
+        <span>First Hit</span>
+        <label class="switch">
+            <input type="checkbox" onclick='raycastShader.setRenderMode(+this.checked)' checked="true">
+            <span class="slider round"></span>
+        </label>
+        <span>MIP</span>
+    </p>
 
     <div class="container">
 
