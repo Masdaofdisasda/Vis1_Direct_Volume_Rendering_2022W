@@ -29,6 +29,9 @@ class RaycastShader extends Shader{
         data3D.unpackAlignment = 1;
         data3D.needsUpdate = true;
 
+        new THREE.TextureLoader().load("shaders/raycast/cm_viridis.png",
+            (texture) => this.setUniform('u_colormap', texture));
+
         const longestAxis = Math.max(volume.width, Math.max(volume.height,volume.depth));
 
         this.setUniform("volume_size", new THREE.Vector3(volume.width, volume.height, volume.depth));
