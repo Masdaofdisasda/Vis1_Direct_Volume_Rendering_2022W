@@ -42,10 +42,20 @@ will result in an error when trying to load the .essl shader files.
 
 ## Shaders
 
-.essl is the OpenGL ES shading language. Shader files should all be located in the folder 'shaders' and end with '.essl'.  
+The shaders are ending in .frag for fragment and .vert for vertex to use syntax highlighting
 
-Recommended code editor: Visual Studio Code (free): https://code.visualstudio.com/
+### Raycast Shader
 
-Install syntax highlighting for shading languages: https://marketplace.visualstudio.com/items?itemName=slevesque.shader
+The shader in shaders/raycast implement a single pass direct volume rendering approach using raycasting. The vertex shader
+transforms the vertices by the camera and transforms the camera positon and view ray as if the bounds of the 3d texture 
+would be in a unit cube from (0,0,0) to (1,1,1). In the fragment the raycasting renderer works by calculating the intersection
+between the view ray and the unit cube and then marching along the view ray to through the unit cube and sampling from the 
+3d texture along the way. 
 
-Enable syntax highlighting: open shader file --> in the bar on the bottom right, switch from plain text to GLSL.  
+For the first hit rendering the current and next sample and position are tracked and if the next sample is over the given
+iso value threshold the position and value gets interpolated to get the actual surface and then the light at this point gets
+calculated. For the normal we use the gradient formula from the lecture slides and for the light model we use the PBR model 
+from here: https://github.com/Masdaofdisasda/cgue22-greed/blob/master/src/bin/assets/shaders/pbr/pbr.frag
+
+The maximum intensity projections simply tracks the highest sampled value and assigns it to a color. For both renderers 
+we use the viridis transfer function from the three.js examples to color our output.
