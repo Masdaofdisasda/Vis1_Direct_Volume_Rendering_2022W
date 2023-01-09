@@ -28,28 +28,28 @@ vec4 add_lighting(float val, vec3 loc, vec3 step, vec3 view_ray);
 
 struct PBRInfo
 {
-    float NdotL;                  // cos angle between normal and light direction
-    float NdotV;                  // cos angle between normal and view direction
-    float NdotH;                  // cos angle between normal and half vector
-    float LdotH;                  // cos angle between light direction and half vector
-    float VdotH;                  // cos angle between view direction and half vector
-    float perceptualRoughness;    // roughness value, as authored by the model creator (input to shader)
-    vec3 reflectance0;            // full reflectance color (normal incidence angle)
-    vec3 reflectance90;           // reflectance color at grazing angle
-    float alphaRoughness;         // roughness mapped to a more linear change in the roughness (proposed by [2])
-    vec3 diffuseColor;            // color contribution from diffuse lighting
-    vec3 specularColor;           // color contribution from specular lighting
-    vec3 n;							// normal at surface point
-    vec3 v;							// vector from surface point to camera
+    float NdotL;// cos angle between normal and light direction
+    float NdotV;// cos angle between normal and view direction
+    float NdotH;// cos angle between normal and half vector
+    float LdotH;// cos angle between light direction and half vector
+    float VdotH;// cos angle between view direction and half vector
+    float perceptualRoughness;// roughness value, as authored by the model creator (input to shader)
+    vec3 reflectance0;// full reflectance color (normal incidence angle)
+    vec3 reflectance90;// reflectance color at grazing angle
+    float alphaRoughness;// roughness mapped to a more linear change in the roughness (proposed by [2])
+    vec3 diffuseColor;// color contribution from diffuse lighting
+    vec3 specularColor;// color contribution from specular lighting
+    vec3 n;// normal at surface point
+    vec3 v;// vector from surface point to camera
 };
 
 const float M_PI = 3.141592653589793;
 
 void main() {
     if (render_mode == 0){
-        raycast_fhc(); // first hit compositing
+        raycast_fhc();// first hit compositing
     } else {
-        raycast_mip(); // maximum intensity projection
+        raycast_mip();// maximum intensity projection
     }
 }
 
@@ -62,35 +62,52 @@ void raycast_fhc() {
     if (t_hit.x > t_hit.y) {
         discard;
     }
-     // set starting point in front of the camera
+    // set starting point in front of the camera
     t_hit.x = max(t_hit.x, 0.0);
 
     // Compute the step size to march through the volume grid
     vec3 dt_vec = 1.0 / (volume_size * abs(ray_dir));
     float dt = min(dt_vec.x, min(dt_vec.y, dt_vec.z));
 
+    // accumulated color
+    float alpha = 0.f;
+    vec3 color = vec3(0.f);
+
+    // initalize point N and N+1
+    vec3 pointN1 = transformed_eye + t_hit.x * ray_dir;
+    vec3 pointN0 = pointN1;
+    float valueN1 = sample_volume(pointN1);
+    float valueN0 = valueN1;
+
     // ray cast loop
-    vec3 p = transformed_eye + t_hit.x * ray_dir;
-    float maxVal = 0.0f;
     for (float t = t_hit.x; t < t_hit.y; t += dt) {
 
+        // step further
+        pointN1 = pointN0 + ray_dir * dt;
+
         // sample the volume
-        float val = texture(volume_data, p).r;
-        if (val > u_renderthreshold){
-            p = p - ray_dir * dt * 0.5;
-            dt = dt / float(REFINEMENT_STEPS);
-            for (int i=0; i<REFINEMENT_STEPS; i++) {
-                if (val > u_renderthreshold){
-                    gl_FragColor = add_lighting(val, p, ray_dir * dt * 0.3, ray_dir);
-                    return;
-                }
-                p += ray_dir * dt;
+        valueN1 = sample_volume(pointN1);
+
+        if (valueN1 > u_renderthreshold){
+            // interpolate to get actual surface point and value
+            float linearInterpolation = (u_renderthreshold - valueN0) / (valueN1 -valueN0);
+            vec3 surfacePoint = mix(pointN0, pointN1, linearInterpolation);
+            float surfaceValue = mix(valueN0, valueN1, linearInterpolation);
+            vec4 lighting = add_lighting(surfaceValue, surfacePoint, ray_dir * dt * 0.3, ray_dir);
+
+            // sample more than the first hit, to reduce artifacts
+            color = lighting.rgb * (1.f - alpha) + color;
+            alpha = min((1.f-alpha) + alpha, 1.f);
+
+            // early ray termination
+            if (alpha > 0.99f) {
+                break;
             }
         }
-
-        // step further
-        p += ray_dir * dt;
+        pointN0 = pointN1;
+        valueN0 = valueN1;
     }
+    gl_FragColor = vec4(color, alpha);
 }
 
 void raycast_mip() {
@@ -102,7 +119,7 @@ void raycast_mip() {
     if (t_hit.x > t_hit.y) {
         discard;
     }
-     // set starting point in front of the camera
+    // set starting point in front of the camera
     t_hit.x = max(t_hit.x, 0.0);
 
     // Compute the step size to march through the volume grid
@@ -169,9 +186,9 @@ vec3 getNormalFromTexture(vec3 loc, vec3 step) {
 
 vec4 apply_color(float val) {
     val = (val - u_clim[0]) / (u_clim[1] - u_clim[0]);
-    return vec4(texture2D(u_colormap, vec2(val, 0.5)).rgb,1.f);
+    return vec4(texture2D(u_colormap, vec2(val, 0.5)).rgb, 1.f);
 }
-vec3 calculatePBRInputsMetallicRoughness( vec4 albedo, vec3 normal, vec3 cameraPos, vec3 worldPos, vec4 mrSample, out PBRInfo pbrInputs )
+vec3 calculatePBRInputsMetallicRoughness(vec4 albedo, vec3 normal, vec3 cameraPos, vec3 worldPos, vec4 mrSample, out PBRInfo pbrInputs)
 {
     float perceptualRoughness = 1.0;
     float metallic = 1.0;
@@ -206,8 +223,8 @@ vec3 calculatePBRInputsMetallicRoughness( vec4 albedo, vec3 normal, vec3 cameraP
     vec3 specularEnvironmentR0 = specularColor.rgb;
     vec3 specularEnvironmentR90 = vec3(1.0, 1.0, 1.0) * reflectance90;
 
-    vec3 n = normalize(normal);					// normal at surface point
-    vec3 v = normalize(cameraPos - worldPos);	// Vector from surface point to camera
+    vec3 n = normalize(normal);// normal at surface point
+    vec3 v = normalize(cameraPos - worldPos);// Vector from surface point to camera
     vec3 reflection = -normalize(reflect(v, n));
 
     pbrInputs.NdotV = clamp(abs(dot(n, v)), 0.001, 1.0);
@@ -262,12 +279,12 @@ float microfacetDistribution(PBRInfo pbrInputs)
     return roughnessSq / (M_PI * f * f);
 }
 
-vec3 calculatePBRLightContributionDir( inout PBRInfo pbrInputs)
+vec3 calculatePBRLightContributionDir(inout PBRInfo pbrInputs)
 {
     vec3 n = pbrInputs.n;
     vec3 v = pbrInputs.v;
-    vec3 l = normalize(transformed_eye);	// Vector from surface point to light
-    vec3 h = normalize(l+v);					// Half vector between both l and v
+    vec3 l = normalize(transformed_eye);// Vector from surface point to light
+    vec3 h = normalize(l+v);// Half vector between both l and v
 
     float NdotV = pbrInputs.NdotV;
     float NdotL = clamp(dot(n, l), 0.001, 1.0);
@@ -323,9 +340,9 @@ vec4 add_lighting(float val, vec3 loc, vec3 step, vec3 view_ray)
     vec3 color = calculatePBRInputsMetallicRoughness(Kd, N, transformed_eye, loc, MeR, pbrInputs);
 
     // directional light contribution
-    color *= calculatePBRLightContributionDir( pbrInputs);
+    color *= calculatePBRLightContributionDir(pbrInputs);
 
-    color = pow(color, vec3(1.0/2.2) ) ;
+    color = pow(color, vec3(1.0/2.2));
 
     return vec4(Reinhard2(color), 1.0);
 }
